@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Excretory System Interactive Quiz</title>
+
+    <style>
+        :root {
+            /* Color Variables */
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --correct: #d4edda;
+            --incorrect: #f8d7da;
+            --accent: #007bff;
+            --mute: #6c757d;
+            --danger: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: Inter, system-ui, apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to the top of the screen */
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 50px; /* Add space from the top */
+        }
+
+        .card {
+            background-color: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        /* --- Question Styling --- */
+        .question-text {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: #343a40;
+        }
+
+        .options-list button {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            background-color: var(--card);
+            text-align: left;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+        }
+
+        .options-list button:hover:not(.disabled) {
+            background-color: #f8f9fa;
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* --- Feedback Styling --- */
+        .options-list button.correct {
+            background-color: var(--correct);
+            border-color: #28a745;
+            font-weight: 600;
+            color: #155724;
+        }
+
+        .options-list button.incorrect {
+            background-color: var(--incorrect);
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        .options-list button.disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        /* --- Status and Control Area --- */
+        .quiz-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: var(--mute);
+        }
+
+        .controls button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        #next-btn {
+            background-color: var(--accent);
+            color: var(--card);
+            display: none; /* Hidden until an answer is selected */
+        }
+        
+        #next-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* --- Quiz End Screen --- */
+        #quiz-end-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        #quiz-end-screen h2 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        #quiz-end-screen p {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        #restart-btn {
+            background-color: var(--danger);
+            color: var(--card);
+        }
+
+        #restart-btn:hover {
+            background-color: #c82333;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="card" id="quiz-card">
+        <div id="question-area"></div>
+
+        <div class="quiz-status">
+            <span id="progress-text"></span>
+            <div class="controls">
+                <button id="next-btn">Next Question</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="quiz-end-screen" style="display: none;">
+        <h2>Quiz Complete! 🎉</h2>
+        <p>You finished the Excretory System Quiz.</p>
+        <p>Your final score is: <span id="final-score"></span></p>
+        <button id="restart-btn">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            question: "1. What is the basic functional unit of the human kidney?",
+            options: ["Ureter", "Renal Pelvis", "Nephron", "Medulla"],
+            answer: "Nephron"
+        },
+        {
+            question: "2. The yellow color of urine is due to the presence of which pigment?",
+            options: ["Melanin", "Urochrome", "Bilirubin", "Hemoglobin"],
+            answer: "Urochrome"
+        },
+        {
+            question: "3. What is the process of removing nitrogenous waste from the body called?",
+            options: ["Respiration", "Digestion", "Excretion", "Circulation"],
+            answer: "Excretion"
+        },
+        {
+            question: "4. Which structure transports urine from the kidney to the urinary bladder?",
+            options: ["Urethra", "Renal Artery", "Ureter", "Vena Cava"],
+            answer: "Ureter"
+        },
+        {
+            question: "5. Ultrafiltration of blood occurs in which part of the nephron?",
+            options: ["Loop of Henle", "Distal Convoluted Tubule", "Glomerulus and Bowman's Capsule", "Collecting Duct"],
+            answer: "Glomerulus and Bowman's Capsule"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    const questionArea = document.getElementById('question-area');
+    const nextButton = document.getElementById('next-btn');
+    const progressText = document.getElementById('progress-text');
+    const quizCard = document.getElementById('quiz-card');
+    const quizEndScreen = document.getElementById('quiz-end-screen');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const restartButton = document.getElementById('restart-btn');
+
+    /**
+     * Renders the current question and its options.
+     */
+    function loadQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const currentQ = questions[currentQuestionIndex];
+        
+        // Update progress text
+        progressText.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length} | Score: ${score}`;
+
+        // Build question HTML
+        questionArea.innerHTML = `
+            <div class="question-text">${currentQ.question}</div>
+            <div class="options-list">
+                ${currentQ.options.map(option => 
+                    `<button class="option" data-answer="${option === currentQ.answer ? 'true' : 'false'}">${option}</button>`
+                ).join('')}
+            </div>
+        `;
+
+        // Hide next button until an option is chosen
+        nextButton.style.display = 'none';
+
+        // Attach event listeners to the new options
+        document.querySelectorAll('.option').forEach(button => {
+            button.addEventListener('click', handleAnswer);
+        });
+    }
+
+    /**
+     * Handles the user's answer selection.
+     * @param {Event} event - The click event.
+     */
+    function handleAnswer(event) {
+        const selectedButton = event.target;
+        const isCorrect = selectedButton.getAttribute('data-answer') === 'true';
+
+        // Disable all buttons
+        document.querySelectorAll('.option').forEach(button => {
+            button.classList.add('disabled');
+        });
+
+        if (isCorrect) {
+            selectedButton.classList.add('correct');
+            score++;
+        } else {
+            selectedButton.classList.add('incorrect');
+            // Highlight the correct answer
+            document.querySelector('[data-answer="true"]').classList.add('correct');
+        }
+
+        // Update score in progress text immediately
+        progressText.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length} | Score: ${score}`;
+        
+        // Show the next button
+        nextButton.style.display = 'block';
+    }
+
+    /**
+     * Moves to the next question.
+     */
+    function nextQuestion() {
+        currentQuestionIndex++;
+        loadQuestion();
+    }
+
+    /**
+     * Shows the final results screen.
+     */
+    function showResults() {
+        quizCard.style.display = 'none';
+        quizEndScreen.style.display = 'block';
+        finalScoreDisplay.textContent = `${score} / ${questions.length}`;
+    }
+
+    /**
+     * Resets the quiz to its initial state.
+     */
+    function restartQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        quizEndScreen.style.display = 'none';
+        quizCard.style.display = 'block';
+        loadQuestion();
+    }
+
+    // --- Initialization ---
+    nextButton.addEventListener('click', nextQuestion);
+    restartButton.addEventListener('click', restartQuiz);
+
+    // Start the quiz
+    loadQuestion();
+</script>
+
+</body>
+</html>
